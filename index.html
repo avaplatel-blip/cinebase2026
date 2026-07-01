@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CineSphere – 3D Movie Universe</title>
+    <title>CineBASE – 3D Movie Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com">
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
@@ -11,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js">
     </script>
     <style>
-        /* ── same styles as before ── */
+        /* ── reset & base ── */
         * {
             margin: 0;
             padding: 0;
@@ -31,6 +32,46 @@
             height: 100vh;
             width: 100vw;
         }
+
+        /* ── Top bar ── */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 30;
+            background: #000000;
+            padding: 12px 20px 10px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 2px solid #333;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.8);
+            font-family: 'Press Start 2P', cursive;
+            color: #ffffff;
+            text-align: center;
+            pointer-events: none;
+        }
+        #top-bar .line {
+            width: 80%;
+            max-width: 400px;
+            height: 2px;
+            background: #444;
+            margin: 4px 0;
+        }
+        #top-bar .title {
+            font-size: 22px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(99,102,241,0.3);
+            padding: 4px 0;
+        }
+        @media (max-width: 600px) {
+            #top-bar .title { font-size: 16px; }
+            #top-bar .line { width: 60%; }
+        }
+
+        /* ── Three.js canvas ── */
         #three-container {
             position: absolute;
             top: 0;
@@ -40,9 +81,9 @@
             z-index: 1;
             cursor: grab;
         }
-        #three-container:active {
-            cursor: grabbing;
-        }
+        #three-container:active { cursor: grabbing; }
+
+        /* ── search bar ── */
         #search-overlay {
             position: absolute;
             bottom: 48px;
@@ -109,9 +150,9 @@
             transform: scale(1.04);
             box-shadow: 0 8px 36px rgba(99, 102, 241, 0.4);
         }
-        .search-btn:active {
-            transform: scale(0.96);
-        }
+        .search-btn:active { transform: scale(0.96); }
+
+        /* ── results dropdown ── */
         #search-results {
             position: absolute;
             bottom: calc(100% + 14px);
@@ -130,19 +171,11 @@
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
         }
-        #search-results::-webkit-scrollbar {
-            width: 4px;
-        }
-        #search-results::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #search-results::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-        }
-        #search-results.open {
-            display: block;
-        }
+        #search-results::-webkit-scrollbar { width: 4px; }
+        #search-results::-webkit-scrollbar-track { background: transparent; }
+        #search-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+        #search-results.open { display: block; }
+
         .result-item {
             padding: 11px 24px;
             display: flex;
@@ -208,6 +241,8 @@
             color: #6b7a8f;
             font-size: 14px;
         }
+
+        /* ── page overlay ── */
         #page-overlay {
             position: absolute;
             top: 0;
@@ -233,16 +268,10 @@
             transform: scale(1);
             pointer-events: all;
         }
-        #page-overlay::-webkit-scrollbar {
-            width: 5px;
-        }
-        #page-overlay::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #page-overlay::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 10px;
-        }
+        #page-overlay::-webkit-scrollbar { width: 5px; }
+        #page-overlay::-webkit-scrollbar-track { background: transparent; }
+        #page-overlay::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
+
         .close-btn {
             position: sticky;
             top: 0;
@@ -269,10 +298,13 @@
             transform: rotate(90deg) scale(1.05);
             border-color: rgba(255, 255, 255, 0.12);
         }
+
         #page-content {
             max-width: 1040px;
             margin: 0 auto;
         }
+
+        /* ── genre header ── */
         .genre-header {
             font-size: 44px;
             font-weight: 800;
@@ -292,6 +324,8 @@
             font-weight: 400;
             letter-spacing: 0.2px;
         }
+
+        /* ── movie grid ── */
         .movie-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -316,9 +350,7 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
-        .movie-card:hover::before {
-            opacity: 1;
-        }
+        .movie-card:hover::before { opacity: 1; }
         .movie-card:hover {
             background: rgba(255, 255, 255, 0.045);
             transform: translateY(-4px);
@@ -350,18 +382,11 @@
             position: relative;
             z-index: 1;
         }
-        .movie-card .m-rating .stars {
-            color: #fbbf24;
-            letter-spacing: 1px;
-        }
-        .movie-card .m-rating .views {
-            color: #5a6a7f;
-        }
-        .movie-card .m-year {
-            color: #5a6a7f;
-            font-weight: 400;
-            font-size: 14px;
-        }
+        .movie-card .m-rating .stars { color: #fbbf24; letter-spacing: 1px; }
+        .movie-card .m-rating .views { color: #5a6a7f; }
+        .movie-card .m-year { color: #5a6a7f; font-weight: 400; font-size: 14px; }
+
+        /* ── movie detail page ── */
         .movie-page .poster-section {
             display: flex;
             gap: 36px;
@@ -383,9 +408,7 @@
             overflow: hidden;
             transition: transform 0.3s;
         }
-        .movie-page .poster-section .poster:hover {
-            transform: scale(1.01);
-        }
+        .movie-page .poster-section .poster:hover { transform: scale(1.01); }
         .movie-page .poster-section .poster img {
             width: 100%;
             height: 100%;
@@ -418,9 +441,7 @@
             transition: color 0.2s;
             font-weight: 600;
         }
-        .movie-page .poster-section .info .director strong:hover {
-            color: #a5b4fc;
-        }
+        .movie-page .poster-section .info .director strong:hover { color: #a5b4fc; }
         .tags {
             display: flex;
             flex-wrap: wrap;
@@ -447,10 +468,7 @@
             color: #8a9aaf;
             margin-top: 10px;
         }
-        .actors strong {
-            color: #eef1f5;
-            font-weight: 500;
-        }
+        .actors strong { color: #eef1f5; font-weight: 500; }
         .awards {
             display: flex;
             flex-wrap: wrap;
@@ -481,6 +499,7 @@
             color: #a5b4fc;
             border-bottom-color: rgba(99, 102, 241, 0.2);
         }
+
         .perspectives {
             display: flex;
             flex-direction: column;
@@ -506,9 +525,8 @@
             gap: 10px;
             letter-spacing: -0.3px;
         }
-        .perspective-block .p-title .emoji {
-            font-size: 22px;
-        }
+        .perspective-block .p-title .emoji { font-size: 22px; }
+
         .rating-bars {
             display: flex;
             flex-wrap: wrap;
@@ -542,6 +560,7 @@
             font-size: 14px;
             font-weight: 600;
         }
+
         .wordcloud {
             display: flex;
             flex-wrap: wrap;
@@ -562,14 +581,9 @@
             background: rgba(255, 255, 255, 0.06);
             transform: scale(1.02);
         }
-        .wordcloud .word.large {
-            font-size: 19px;
-            padding: 6px 20px;
-        }
-        .wordcloud .word.med {
-            font-size: 15px;
-            padding: 5px 16px;
-        }
+        .wordcloud .word.large { font-size: 19px; padding: 6px 20px; }
+        .wordcloud .word.med { font-size: 15px; padding: 5px 16px; }
+
         .aesthetic-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -604,6 +618,7 @@
             font-size: 13px;
             font-weight: 600;
         }
+
         .financial-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -630,6 +645,7 @@
             margin-top: 2px;
             letter-spacing: -0.3px;
         }
+
         .director-page .dir-header {
             display: flex;
             align-items: center;
@@ -660,14 +676,13 @@
             font-size: 16px;
             color: #8a9aaf;
         }
-        .director-page .dir-header .info .avg strong {
-            color: #fbbf24;
-        }
+        .director-page .dir-header .info .avg strong { color: #fbbf24; }
         .director-page .movie-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 14px;
         }
+
         .hint-text {
             position: absolute;
             bottom: 118px;
@@ -684,6 +699,7 @@
             text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
             font-family: 'Inter', system-ui, sans-serif;
         }
+
         .loading-spinner {
             display: flex;
             align-items: center;
@@ -702,11 +718,8 @@
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         @media (max-width: 820px) {
             #search-overlay {
                 width: 92%;
@@ -714,59 +727,22 @@
                 padding: 4px 6px 4px 18px;
                 border-radius: 44px;
             }
-            #search-overlay input {
-                font-size: 13px;
-                padding: 10px 0;
-            }
-            .search-btn {
-                padding: 8px 16px;
-                font-size: 12px;
-            }
-            .search-btn span {
-                display: none;
-            }
-            #page-overlay {
-                padding: 20px 16px 40px;
-            }
-            .movie-page .poster-section .poster {
-                width: 140px;
-                height: 196px;
-                font-size: 44px;
-            }
-            .movie-page .poster-section .info .title {
-                font-size: 28px;
-            }
-            .movie-page .poster-section .info .title .year {
-                font-size: 20px;
-            }
-            .genre-header {
-                font-size: 32px;
-            }
-            .movie-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            .perspective-block {
-                padding: 18px 20px;
-            }
-            .aesthetic-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            .financial-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            .director-page .dir-header .info .name {
-                font-size: 28px;
-            }
-            .director-page .movie-list {
-                grid-template-columns: 1fr 1fr;
-            }
-            .hint-text {
-                bottom: 86px;
-                font-size: 11px;
-            }
-            .rating-bars .rb-item .rb-bar {
-                width: 90px;
-            }
+            #search-overlay input { font-size: 13px; padding: 10px 0; }
+            .search-btn { padding: 8px 16px; font-size: 12px; }
+            .search-btn span { display: none; }
+            #page-overlay { padding: 20px 16px 40px; }
+            .movie-page .poster-section .poster { width: 140px; height: 196px; font-size: 44px; }
+            .movie-page .poster-section .info .title { font-size: 28px; }
+            .movie-page .poster-section .info .title .year { font-size: 20px; }
+            .genre-header { font-size: 32px; }
+            .movie-grid { grid-template-columns: 1fr 1fr; }
+            .perspective-block { padding: 18px 20px; }
+            .aesthetic-grid { grid-template-columns: 1fr 1fr; }
+            .financial-grid { grid-template-columns: 1fr 1fr; }
+            .director-page .dir-header .info .name { font-size: 28px; }
+            .director-page .movie-list { grid-template-columns: 1fr 1fr; }
+            .hint-text { bottom: 86px; font-size: 11px; }
+            .rating-bars .rb-item .rb-bar { width: 90px; }
         }
         @media (max-width: 500px) {
             #search-overlay {
@@ -775,85 +751,57 @@
                 padding: 4px 4px 4px 14px;
                 border-radius: 34px;
             }
-            #search-overlay input {
-                font-size: 12px;
-                padding: 8px 0;
-            }
-            .search-btn {
-                padding: 6px 12px;
-                font-size: 11px;
-            }
-            #page-overlay {
-                padding: 14px 10px 30px;
-            }
-            .movie-page .poster-section .poster {
-                width: 100px;
-                height: 140px;
-                font-size: 32px;
-            }
-            .movie-page .poster-section .info .title {
-                font-size: 20px;
-            }
-            .movie-page .poster-section .info .title .year {
-                font-size: 16px;
-            }
-            .genre-header {
-                font-size: 22px;
-            }
-            .movie-grid {
-                grid-template-columns: 1fr;
-            }
-            .perspective-block .p-title {
-                font-size: 17px;
-            }
-            .aesthetic-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 10px 16px;
-            }
-            .financial-grid {
-                grid-template-columns: 1fr;
-            }
-            .director-page .dir-header .info .name {
-                font-size: 22px;
-            }
-            .director-page .movie-list {
-                grid-template-columns: 1fr;
-            }
-            .hint-text {
-                bottom: 70px;
-                font-size: 10px;
-            }
-            .rating-bars .rb-item .rb-bar {
-                width: 70px;
-            }
-            .close-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 16px;
-            }
-            .movie-card {
-                padding: 12px 16px;
-            }
-            .movie-card .m-title {
-                font-size: 15px;
-            }
+            #search-overlay input { font-size: 12px; padding: 8px 0; }
+            .search-btn { padding: 6px 12px; font-size: 11px; }
+            #page-overlay { padding: 14px 10px 30px; }
+            .movie-page .poster-section .poster { width: 100px; height: 140px; font-size: 32px; }
+            .movie-page .poster-section .info .title { font-size: 20px; }
+            .movie-page .poster-section .info .title .year { font-size: 16px; }
+            .genre-header { font-size: 22px; }
+            .movie-grid { grid-template-columns: 1fr; }
+            .perspective-block .p-title { font-size: 17px; }
+            .aesthetic-grid { grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+            .financial-grid { grid-template-columns: 1fr; }
+            .director-page .dir-header .info .name { font-size: 22px; }
+            .director-page .movie-list { grid-template-columns: 1fr; }
+            .hint-text { bottom: 70px; font-size: 10px; }
+            .rating-bars .rb-item .rb-bar { width: 70px; }
+            .close-btn { width: 36px; height: 36px; font-size: 16px; }
+            .movie-card { padding: 12px 16px; }
+            .movie-card .m-title { font-size: 15px; }
         }
     </style>
 </head>
 <body>
     <div id="root">
+
+        <!-- TOP BAR -->
+        <div id="top-bar">
+            <div class="line"></div>
+            <div class="title">CineBASE</div>
+            <div class="line"></div>
+        </div>
+
+        <!-- THREE.JS CANVAS -->
         <div id="three-container"></div>
+
+        <!-- HINT -->
         <div class="hint-text">✦ click any bubble – main genre or subgenre – to see top‑rated films</div>
+
+        <!-- SEARCH BAR -->
         <div id="search-overlay">
-            <input type="text" id="search-input" placeholder="Search movies…" autocomplete="off" />
+            <input type="text" id="search-input" placeholder="Search movies by title…" autocomplete="off" />
             <div class="divider"></div>
             <button class="search-btn" id="search-btn">⌘ <span>Search</span></button>
             <div id="search-results"></div>
         </div>
+
+        <!-- PAGE OVERLAY -->
         <div id="page-overlay">
             <button class="close-btn" id="close-overlay">✕</button>
             <div id="page-content"></div>
         </div>
+
     </div>
 
     <script>
@@ -880,15 +828,6 @@
             return tmdbFetch(`/person/${id}`, '&append_to_response=movie_credits');
         }
 
-        async function getKeywordId(query) {
-            try {
-                const data = await tmdbFetch('/search/keyword', `&query=${encodeURIComponent(query)}`);
-                return data.results?.[0]?.id || null;
-            } catch {
-                return null;
-            }
-        }
-
         function formatCurrency(val) {
             if (!val) return '—';
             if (val >= 1e9) return '$' + (val / 1e9).toFixed(1) + 'B';
@@ -906,9 +845,12 @@
         // ── genre maps ──
         let genreMap = {};
         let genreNameToId = {};
+        let genresLoaded = false;
 
-        // ── display name to actual TMDB genre name mapping (for main genres) ──
+        // ── display name to actual TMDB genre name mapping ──
+        // This covers main genres and all subgenres, mapped to official TMDB genre names.
         const DISPLAY_TO_GENRE = {
+            // Main genres
             'Action': 'Action',
             'Drama': 'Drama',
             'Comedy': 'Comedy',
@@ -918,7 +860,78 @@
             'Thriller': 'Thriller',
             'Animation': 'Animation',
             'Fantasy': 'Fantasy',
-            'Crime': 'Crime'
+            'Crime': 'Crime',
+
+            // Subgenres (mapped to parent genres)
+            'Adventure': 'Adventure',
+            'Martial Arts': 'Action',
+            'Superhero': 'Action',
+            'Spy': 'Action',
+            'War': 'War',
+            'Disaster': 'Action',
+            'Heist': 'Crime',
+
+            'Historical': 'History',
+            'Psychological': 'Thriller',
+            'Family': 'Family',
+            'Legal': 'Drama',
+            'Political': 'Thriller',
+            'Melodrama': 'Drama',
+
+            'Romantic': 'Romance',
+            'Black': 'Comedy',
+            'Satire': 'Comedy',
+            'Slapstick': 'Comedy',
+            'Mockumentary': 'Comedy',
+            'Screwball': 'Comedy',
+            'Dark': 'Comedy',
+
+            'Cyberpunk': 'Science Fiction',
+            'Space Opera': 'Science Fiction',
+            'Time Travel': 'Science Fiction',
+            'Dystopian': 'Science Fiction',
+            'Alien': 'Science Fiction',
+            'Steampunk': 'Science Fiction',
+
+            'Slasher': 'Horror',
+            'Supernatural': 'Horror',
+            'Body': 'Horror',
+            'Found Footage': 'Horror',
+            'Gothic': 'Horror',
+
+            'Romantic Drama': 'Romance',
+            'Romantic Comedy': 'Romance',
+            'Period': 'Romance',
+            'Musical': 'Music',
+            'Teen': 'Romance',
+            'Epic': 'Adventure',
+
+            'Mystery': 'Mystery',
+            'Neo-Noir': 'Crime',
+            'Erotic': 'Romance',
+
+            '2D': 'Animation',
+            '3D': 'Animation',
+            'Stop Motion': 'Animation',
+            'Anime': 'Animation',
+            'CGI': 'Animation',
+            'Claymation': 'Animation',
+            'Traditional': 'Animation',
+
+            'High': 'Fantasy',
+            'Low': 'Fantasy',
+            'Urban': 'Fantasy',
+            'Sword & Sorcery': 'Fantasy',
+            'Fairy Tale': 'Fantasy',
+            'Mythological': 'Fantasy',
+
+            'Mob': 'Crime',
+            'Noir': 'Crime',
+            'Detective': 'Crime',
+            'Gangster': 'Crime',
+            'Police': 'Crime',
+            'Caper': 'Crime',
+            'Prison': 'Drama'
         };
 
         async function loadGenres() {
@@ -929,17 +942,22 @@
                     genreNameToId[g.name] = g.id;
                     genreNameToId[g.name.toLowerCase()] = g.id;
                 });
+                genresLoaded = true;
+                console.log('✅ Genres loaded:', Object.keys(genreNameToId).length);
             } catch (e) { console.warn('Genre load failed', e); }
         }
-        loadGenres();
+
+        let genresPromise = loadGenres();
 
         function genreNames(ids) {
             if (!ids || !ids.length) return ['Unknown'];
             return ids.map(id => genreMap[id] || 'Unknown').filter(Boolean);
         }
 
-        // ── GENRE RANKING with fallback ──
-        async function openGenreRanking(name, fallbackGenre = null) {
+        // ── GENRE RANKING – always uses official TMDB genre ID ──
+        async function openGenreRanking(name, fallbackName = null) {
+            if (!genresLoaded) await genresPromise;
+
             const overlay = document.getElementById('page-overlay');
             const content = document.getElementById('page-content');
             content.innerHTML = `<div class="loading-spinner">Loading top "${name}" films…</div>`;
@@ -947,57 +965,25 @@
             document.body.style.overflow = 'hidden';
 
             try {
-                let queryParam = '';
-                let usedName = name;
-
-                // 1. Check if name is a known genre (case-insensitive)
-                const lower = name.toLowerCase();
-                let genreId = genreNameToId[lower] || genreNameToId[name];
-                if (genreId) {
-                    queryParam = `&with_genres=${genreId}`;
-                } else {
-                    // 2. Try as keyword
-                    const keywordId = await getKeywordId(name);
-                    if (keywordId) {
-                        queryParam = `&with_keywords=${keywordId}`;
-                    } else if (fallbackGenre) {
-                        // 3. Fallback to the parent genre
-                        const fallbackLower = fallbackGenre.toLowerCase();
-                        const fallbackId = genreNameToId[fallbackLower] || genreNameToId[fallbackGenre];
-                        if (fallbackId) {
-                            queryParam = `&with_genres=${fallbackId}`;
-                            usedName = fallbackGenre; // show the fallback name in the header
-                        }
-                    }
+                // Determine the official genre name
+                let officialGenre = DISPLAY_TO_GENRE[name] || name;
+                // If no direct mapping, try fallback
+                if (!genreNameToId[officialGenre] && fallbackName) {
+                    officialGenre = DISPLAY_TO_GENRE[fallbackName] || fallbackName;
                 }
 
-                if (!queryParam) {
+                const genreId = genreNameToId[officialGenre];
+                if (!genreId) {
                     content.innerHTML =
-                        `<div style="padding:40px;text-align:center;color:#6b7a8f;">No genre or keyword found for “${name}”.</div>`;
+                        `<div style="padding:40px;text-align:center;color:#6b7a8f;">No official genre mapping for “${name}”.</div>`;
                     return;
                 }
 
                 const data = await tmdbFetch('/discover/movie',
-                    `${queryParam}&sort_by=vote_average.desc&vote_count.gte=50&page=1`
+                    `&with_genres=${genreId}&sort_by=vote_average.desc&vote_count.gte=50&page=1`
                 );
                 const movies = data.results || [];
                 if (!movies.length) {
-                    // If no movies with that specific tag, try the parent genre as a last resort
-                    if (fallbackGenre) {
-                        const fallbackLower = fallbackGenre.toLowerCase();
-                        const fallbackId = genreNameToId[fallbackLower] || genreNameToId[fallbackGenre];
-                        if (fallbackId && queryParam !== `&with_genres=${fallbackId}`) {
-                            // Re‑fetch with fallback genre
-                            const fallbackData = await tmdbFetch('/discover/movie',
-                                `&with_genres=${fallbackId}&sort_by=vote_average.desc&vote_count.gte=50&page=1`
-                            );
-                            const fallbackMovies = fallbackData.results || [];
-                            if (fallbackMovies.length) {
-                                renderGenreRanking(`${name} (shown as ${fallbackGenre})`, fallbackMovies);
-                                return;
-                            }
-                        }
-                    }
                     content.innerHTML =
                         `<div style="padding:40px;text-align:center;color:#6b7a8f;">No movies found for “${name}”.</div>`;
                     return;
@@ -1014,12 +1000,12 @@
             const label = genreName.charAt(0).toUpperCase() + genreName.slice(1);
 
             let html = `
-                    <div style="margin-bottom:12px;">
-                        <div class="genre-header"><span>🎬 ${label}</span> <span style="font-size:20px;color:#6b7a8f;font-weight:400;">Top Ranked</span></div>
-                        <div class="genre-sub">Movies ranked by TMDB vote average (min 50 votes)</div>
-                    </div>
-                    <div class="movie-grid">
-                `;
+                <div style="margin-bottom:12px;">
+                    <div class="genre-header"><span>🎬 ${label}</span> <span style="font-size:20px;color:#6b7a8f;font-weight:400;">Top Ranked</span></div>
+                    <div class="genre-sub">Movies ranked by TMDB vote average (min 50 votes)</div>
+                </div>
+                <div class="movie-grid">
+            `;
 
             movies.forEach(m => {
                 const year = getYear(m.release_date);
@@ -1027,22 +1013,22 @@
                 const poster = m.poster_path ? TMDB_IMG + m.poster_path : null;
                 const stars = '★'.repeat(Math.round(rating / 2)) + '☆'.repeat(5 - Math.round(rating / 2));
                 html += `
-                        <div class="movie-card" onclick="openMovie(${m.id})">
-                            <div style="display:flex;gap:14px;align-items:center;">
-                                <div style="width:44px;height:60px;border-radius:6px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,0.04);">
-                                    ${poster ? `<img src="${poster}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}
-                                </div>
-                                <div style="flex:1;min-width:0;">
-                                    <div class="m-title">${m.title} <span class="m-year">${year ? `(${year})` : ''}</span></div>
-                                    <div class="m-rating">
-                                        <span class="stars">${stars}</span>
-                                        <span style="color:#fbbf24;">${rating.toFixed(1)}</span>
-                                        <span class="views">👁️ ${(m.vote_count||0).toLocaleString()}</span>
-                                    </div>
+                    <div class="movie-card" onclick="openMovie(${m.id})">
+                        <div style="display:flex;gap:14px;align-items:center;">
+                            <div style="width:44px;height:60px;border-radius:6px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,0.04);">
+                                ${poster ? `<img src="${poster}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="m-title">${m.title} <span class="m-year">${year ? `(${year})` : ''}</span></div>
+                                <div class="m-rating">
+                                    <span class="stars">${stars}</span>
+                                    <span style="color:#fbbf24;">${rating.toFixed(1)}</span>
+                                    <span class="views">👁️ ${(m.vote_count||0).toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
-                    `;
+                    </div>
+                `;
             });
 
             html += `</div>`;
@@ -1114,9 +1100,9 @@
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
             const r = 60 + Math.random() * 80;
-            pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-            pos[i * 3 + 1] = r * Math.cos(phi) * 0.4;
-            pos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+            pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+            pos[i*3+1] = r * Math.cos(phi) * 0.4;
+            pos[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
             sizes[i] = 0.08 + Math.random() * 0.2;
         }
         starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -1195,8 +1181,7 @@
                 const sz = z + Math.sin(subAngle) * subRadius;
                 const sy = y + (Math.random() - 0.5) * 0.7;
 
-                const subColor = new THREE.Color().setHSL((hue + 0.25 + j / subs.length * 0.25) % 1, 0.55,
-                0.45);
+                const subColor = new THREE.Color().setHSL((hue + 0.25 + j / subs.length * 0.25) % 1, 0.55, 0.45);
                 const subGeo = new THREE.SphereGeometry(0.32, 20, 20);
                 const subMat = new THREE.MeshPhysicalMaterial({
                     color: subColor,
@@ -1274,15 +1259,14 @@
         animateBubbles();
 
         window.addEventListener('resize', () => {
-            const w = container.clientWidth,
-                h = container.clientHeight;
+            const w = container.clientWidth, h = container.clientHeight;
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
             renderer.setSize(w, h);
         });
 
         // ═══════════════════════════════════════════════════════════════════
-        //  SEARCH – MOVIES ONLY
+        //  SEARCH – MOVIES ONLY (title contains query, case-insensitive)
         // ═══════════════════════════════════════════════════════════════════
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
@@ -1296,45 +1280,45 @@
 
             const trimmed = query.trim();
 
-            // Check if the query matches a known genre (main or sub)
+            // Ensure genres are loaded for genre detection (but we don't need it for movie search)
+            if (!genresLoaded) await genresPromise;
+
+            // If the query matches a known genre or subgenre name, open the ranking overlay.
+            // This allows the user to type "Sci-Fi" and see the ranking.
             const lower = trimmed.toLowerCase();
-            const actualName = DISPLAY_TO_GENRE[trimmed] || trimmed;
-            if (genreNameToId[lower] || genreNameToId[actualName.toLowerCase()]) {
+            // Check if we have a mapping for this term (including subgenres)
+            const mappedGenre = DISPLAY_TO_GENRE[trimmed] || DISPLAY_TO_GENRE[lower] || null;
+            if (mappedGenre && genreNameToId[mappedGenre]) {
+                openGenreRanking(trimmed);
+                resultsContainer.classList.remove('open');
+                return;
+            }
+            // Also check main genre names directly
+            if (genreNameToId[lower] || genreNameToId[trimmed]) {
                 openGenreRanking(trimmed);
                 resultsContainer.classList.remove('open');
                 return;
             }
 
-            // Check if it's a keyword (subgenre)
-            const keywordId = await getKeywordId(trimmed);
-            if (keywordId) {
-                openGenreRanking(trimmed);
-                resultsContainer.classList.remove('open');
-                return;
-            }
-
-            // Movie search with starts‑with
+            // Movie search – find movies whose title contains the query (case-insensitive)
             try {
                 const data = await tmdbFetch('/search/movie', `&query=${encodeURIComponent(trimmed)}`);
                 const results = data.results || [];
                 const lowerQuery = trimmed.toLowerCase();
-                const exactMatches = results.filter(m =>
-                    m.title && m.title.toLowerCase().startsWith(lowerQuery)
-                );
-                const fallback = exactMatches.length === 0 ?
-                    results.filter(m => m.title && m.title.toLowerCase().includes(lowerQuery)) :
-                    [];
-                const items = (exactMatches.length > 0 ? exactMatches : fallback).slice(0, 8);
+                // Filter to titles that contain the query (anywhere)
+                const matched = results.filter(m =>
+                    m.title && m.title.toLowerCase().includes(lowerQuery)
+                ).slice(0, 8);
 
-                if (!items.length) {
+                if (!matched.length) {
                     resultsContainer.innerHTML =
-                        `<div class="result-empty">No movies found starting with “${trimmed}”</div>`;
+                        `<div class="result-empty">No movies found containing “${trimmed}”</div>`;
                     resultsContainer.classList.add('open');
                     return;
                 }
 
                 let html = '';
-                for (const item of items) {
+                for (const item of matched) {
                     const title = item.title || 'Untitled';
                     const year = item.release_date ? getYear(item.release_date) : null;
                     const poster = item.poster_path ? TMDB_IMG + item.poster_path : null;
@@ -1372,8 +1356,7 @@
             }
         }
 
-        // ── keep the rest of the functions (openMovie, renderMovie, openPerson, renderPerson) identical ──
-        // (they are unchanged from the previous version, but I'll include them for completeness)
+        // ── Movie detail and person functions (unchanged) ──
         async function openMovie(id) {
             const overlay = document.getElementById('page-overlay');
             const content = document.getElementById('page-content');
@@ -1422,114 +1405,114 @@
             aestheticKeys.forEach((k) => {
                 const val = clamp(baseScore + (Math.random() - 0.5) * 0.25, 0.1, 0.98);
                 aestHtml += `
-                        <div class="ae-item">
-                            <span class="ae-label">${k.replace(/([A-Z])/g,' $1').trim()}</span>
-                            <div class="ae-bar"><div class="fill" style="width:${val*100}%;"></div></div>
-                            <span class="ae-val">${(val*10).toFixed(1)}</span>
-                        </div>
-                    `;
+                    <div class="ae-item">
+                        <span class="ae-label">${k.replace(/([A-Z])/g,' $1').trim()}</span>
+                        <div class="ae-bar"><div class="fill" style="width:${val*100}%;"></div></div>
+                        <span class="ae-val">${(val*10).toFixed(1)}</span>
+                    </div>
+                `;
             });
 
             const wordcloudWords = keywords.length ? keywords : ['cinematic', 'drama', 'visual', 'story', 'character', 'style'];
 
             const html = `
-                    <div class="movie-page">
-                        ${backdrop ? `<div style="margin-bottom:24px;border-radius:16px;overflow:hidden;max-height:220px;background:#0a0c12;"><img src="${backdrop}" style="width:100%;height:220px;object-fit:cover;opacity:0.6;" /></div>` : ''}
-                        <div class="poster-section">
-                            <div class="poster">${poster ? `<img src="${poster}" />` : '🎬'}</div>
-                            <div class="info">
-                                <div class="title">${title} <span class="year">${year ? `(${year})` : ''}</span></div>
-                                ${tagline ? `<div style="font-size:15px;color:#8a9aaf;font-style:italic;margin-top:2px;">“${tagline}”</div>` : ''}
-                                <div class="director">Directed by ${directorId ? `<strong onclick="openPerson(${directorId})">${director}</strong>` : `<strong>${director}</strong>`}</div>
-                                <div class="tags">${genres.map(g => `<span class="tag genre-tag">${g}</span>`).join('')}</div>
-                                ${cast.length ? `<div class="actors"><strong>Cast:</strong> ${cast.join(', ')}</div>` : ''}
-                                ${runtime ? `<div class="actors"><strong>Runtime:</strong> ${runtime} min</div>` : ''}
-                                <div class="actors"><strong>Status:</strong> ${status}</div>
-                                ${awards.length ? `<div class="awards">${awards.map(a => `<span class="badge">🏆 ${a}</span>`).join('')}</div>` : ''}
-                                <a href="https://www.themoviedb.org/movie/${data.id}" target="_blank" class="wiki-link">🔗 TMDB Page</a>
-                            </div>
-                        </div>
-
-                        <div style="margin-bottom:20px;background:rgba(255,255,255,0.02);border-radius:16px;padding:20px 24px;border:1px solid rgba(255,255,255,0.04);">
-                            <p style="color:#c8d0dc;line-height:1.7;font-size:15px;">${overview}</p>
-                        </div>
-
-                        <div class="perspectives">
-                            <div class="perspective-block">
-                                <div class="p-title"><span class="emoji">👥</span> Audience</div>
-                                <div class="rating-bars">
-                                    <div class="rb-item">
-                                        <span class="rb-label">TMDB Rating</span>
-                                        <div class="rb-bar"><div class="fill" style="width:${voteAvg*10}%;"></div></div>
-                                        <span class="rb-val">${voteAvg.toFixed(1)} / 10</span>
-                                    </div>
-                                    <div class="rb-item">
-                                        <span class="rb-label">Popularity</span>
-                                        <div class="rb-bar"><div class="fill" style="width:${clamp(data.popularity/20,0,100)}%;"></div></div>
-                                        <span class="rb-val">${Math.round(data.popularity)}</span>
-                                    </div>
-                                    <div class="rb-item">
-                                        <span class="rb-label">Votes</span>
-                                        <div class="rb-bar"><div class="fill" style="width:${clamp(voteCount/5000*100,0,100)}%;"></div></div>
-                                        <span class="rb-val">${voteCount.toLocaleString()}</span>
-                                    </div>
-                                </div>
-                                <div style="margin-top:14px;font-size:14px;color:#8a9aaf;">
-                                    ⭐ ${stars}  •  ${voteCount.toLocaleString()} votes
-                                </div>
-                                <div class="wordcloud">${wordcloudWords.map(w => `<span class="word ${wordcloudWords.indexOf(w)<2?'large':wordcloudWords.indexOf(w)<5?'med':''}">#${w}</span>`).join('')}</div>
-                            </div>
-
-                            <div class="perspective-block">
-                                <div class="p-title"><span class="emoji">🎨</span> Aesthetic Analysis</div>
-                                <div class="aesthetic-grid">${aestHtml}</div>
-                            </div>
-
-                            <div class="perspective-block">
-                                <div class="p-title"><span class="emoji">💰</span> Financial</div>
-                                <div class="financial-grid">
-                                    <div class="fi-item"><div class="fi-label">Budget</div><div class="fi-val">${formatCurrency(budget)}</div></div>
-                                    <div class="fi-item"><div class="fi-label">Revenue</div><div class="fi-val">${formatCurrency(revenue)}</div></div>
-                                    <div class="fi-item"><div class="fi-label">Profit</div><div class="fi-val" style="color:${revenue-budget>0?'#4ade80':'#f87171'};">${formatCurrency(revenue-budget)}</div></div>
-                                </div>
-                            </div>
-
-                            ${similar.length ? `
-                            <div class="perspective-block">
-                                <div class="p-title"><span class="emoji">🎯</span> Similar Movies</div>
-                                <div class="movie-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
-                                    ${similar.map(m => `
-                                        <div class="movie-card" onclick="openMovie(${m.id})" style="padding:12px 14px;">
-                                            <div style="display:flex;align-items:center;gap:12px;">
-                                                <div style="width:36px;height:48px;border-radius:4px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">${m.poster_path ? `<img src="${TMDB_IMG+m.poster_path}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}</div>
-                                                <div>
-                                                    <div class="m-title" style="font-size:14px;">${m.title}</div>
-                                                    <div class="m-meta" style="font-size:11px;">${m.release_date ? getYear(m.release_date) : ''}  ⭐ ${(m.vote_average||0).toFixed(1)}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                            ` : ''}
-
-                            ${videos.length ? `
-                            <div class="perspective-block">
-                                <div class="p-title"><span class="emoji">🎥</span> Trailers</div>
-                                <div style="display:flex;gap:16px;flex-wrap:wrap;">
-                                    ${videos.map(v => `
-                                        <div style="flex:1;min-width:200px;max-width:380px;border-radius:12px;overflow:hidden;background:#0a0c12;border:1px solid rgba(255,255,255,0.04);">
-                                            <div style="position:relative;padding-bottom:56.25%;height:0;">
-                                                <iframe src="https://www.youtube.com/embed/${v.key}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                            ` : ''}
+                <div class="movie-page">
+                    ${backdrop ? `<div style="margin-bottom:24px;border-radius:16px;overflow:hidden;max-height:220px;background:#0a0c12;"><img src="${backdrop}" style="width:100%;height:220px;object-fit:cover;opacity:0.6;" /></div>` : ''}
+                    <div class="poster-section">
+                        <div class="poster">${poster ? `<img src="${poster}" />` : '🎬'}</div>
+                        <div class="info">
+                            <div class="title">${title} <span class="year">${year ? `(${year})` : ''}</span></div>
+                            ${tagline ? `<div style="font-size:15px;color:#8a9aaf;font-style:italic;margin-top:2px;">“${tagline}”</div>` : ''}
+                            <div class="director">Directed by ${directorId ? `<strong onclick="openPerson(${directorId})">${director}</strong>` : `<strong>${director}</strong>`}</div>
+                            <div class="tags">${genres.map(g => `<span class="tag genre-tag">${g}</span>`).join('')}</div>
+                            ${cast.length ? `<div class="actors"><strong>Cast:</strong> ${cast.join(', ')}</div>` : ''}
+                            ${runtime ? `<div class="actors"><strong>Runtime:</strong> ${runtime} min</div>` : ''}
+                            <div class="actors"><strong>Status:</strong> ${status}</div>
+                            ${awards.length ? `<div class="awards">${awards.map(a => `<span class="badge">🏆 ${a}</span>`).join('')}</div>` : ''}
+                            <a href="https://www.themoviedb.org/movie/${data.id}" target="_blank" class="wiki-link">🔗 TMDB Page</a>
                         </div>
                     </div>
-                `;
+
+                    <div style="margin-bottom:20px;background:rgba(255,255,255,0.02);border-radius:16px;padding:20px 24px;border:1px solid rgba(255,255,255,0.04);">
+                        <p style="color:#c8d0dc;line-height:1.7;font-size:15px;">${overview}</p>
+                    </div>
+
+                    <div class="perspectives">
+                        <div class="perspective-block">
+                            <div class="p-title"><span class="emoji">👥</span> Audience</div>
+                            <div class="rating-bars">
+                                <div class="rb-item">
+                                    <span class="rb-label">TMDB Rating</span>
+                                    <div class="rb-bar"><div class="fill" style="width:${voteAvg*10}%;"></div></div>
+                                    <span class="rb-val">${voteAvg.toFixed(1)} / 10</span>
+                                </div>
+                                <div class="rb-item">
+                                    <span class="rb-label">Popularity</span>
+                                    <div class="rb-bar"><div class="fill" style="width:${clamp(data.popularity/20,0,100)}%;"></div></div>
+                                    <span class="rb-val">${Math.round(data.popularity)}</span>
+                                </div>
+                                <div class="rb-item">
+                                    <span class="rb-label">Votes</span>
+                                    <div class="rb-bar"><div class="fill" style="width:${clamp(voteCount/5000*100,0,100)}%;"></div></div>
+                                    <span class="rb-val">${voteCount.toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div style="margin-top:14px;font-size:14px;color:#8a9aaf;">
+                                ⭐ ${stars}  •  ${voteCount.toLocaleString()} votes
+                            </div>
+                            <div class="wordcloud">${wordcloudWords.map(w => `<span class="word ${wordcloudWords.indexOf(w)<2?'large':wordcloudWords.indexOf(w)<5?'med':''}">#${w}</span>`).join('')}</div>
+                        </div>
+
+                        <div class="perspective-block">
+                            <div class="p-title"><span class="emoji">🎨</span> Aesthetic Analysis</div>
+                            <div class="aesthetic-grid">${aestHtml}</div>
+                        </div>
+
+                        <div class="perspective-block">
+                            <div class="p-title"><span class="emoji">💰</span> Financial</div>
+                            <div class="financial-grid">
+                                <div class="fi-item"><div class="fi-label">Budget</div><div class="fi-val">${formatCurrency(budget)}</div></div>
+                                <div class="fi-item"><div class="fi-label">Revenue</div><div class="fi-val">${formatCurrency(revenue)}</div></div>
+                                <div class="fi-item"><div class="fi-label">Profit</div><div class="fi-val" style="color:${revenue-budget>0?'#4ade80':'#f87171'};">${formatCurrency(revenue-budget)}</div></div>
+                            </div>
+                        </div>
+
+                        ${similar.length ? `
+                        <div class="perspective-block">
+                            <div class="p-title"><span class="emoji">🎯</span> Similar Movies</div>
+                            <div class="movie-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
+                                ${similar.map(m => `
+                                    <div class="movie-card" onclick="openMovie(${m.id})" style="padding:12px 14px;">
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            <div style="width:36px;height:48px;border-radius:4px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">${m.poster_path ? `<img src="${TMDB_IMG+m.poster_path}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}</div>
+                                            <div>
+                                                <div class="m-title" style="font-size:14px;">${m.title}</div>
+                                                <div class="m-meta" style="font-size:11px;">${m.release_date ? getYear(m.release_date) : ''}  ⭐ ${(m.vote_average||0).toFixed(1)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${videos.length ? `
+                        <div class="perspective-block">
+                            <div class="p-title"><span class="emoji">🎥</span> Trailers</div>
+                            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                                ${videos.map(v => `
+                                    <div style="flex:1;min-width:200px;max-width:380px;border-radius:12px;overflow:hidden;background:#0a0c12;border:1px solid rgba(255,255,255,0.04);">
+                                        <div style="position:relative;padding-bottom:56.25%;height:0;">
+                                            <iframe src="https://www.youtube.com/embed/${v.key}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
 
             content.innerHTML = html;
         }
@@ -1565,37 +1548,37 @@
                 avgRating = rated.reduce((s, m) => s + m.vote_average, 0) / rated.length;
             }
             const html = `
-                    <div class="director-page">
-                        <div class="dir-header">
-                            <div class="avatar">${profile ? `<img src="${profile}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />` : name.charAt(0).toUpperCase()}</div>
-                            <div class="info">
-                                <div class="name">${name}</div>
-                                <div class="avg">${known}  •  ⭐ <strong>${avgRating.toFixed(1)}</strong> avg rating  •  👁️ ${Math.round(popularity)}</div>
-                                <div style="color:#8a9aaf;font-size:14px;margin-top:2px;">${birthday}  •  ${place}</div>
-                            </div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.02);border-radius:16px;padding:20px 24px;border:1px solid rgba(255,255,255,0.04);margin-bottom:28px;">
-                            <p style="color:#c8d0dc;line-height:1.7;font-size:15px;">${bio}</p>
-                        </div>
-                        <div class="perspective-block">
-                            <div class="p-title"><span class="emoji">🎬</span> Filmography (${movies.length} titles)</div>
-                            <div class="movie-list">
-                                ${movies.map(m => `
-                                    <div class="movie-card" onclick="openMovie(${m.id})" style="padding:12px 16px;">
-                                        <div style="display:flex;align-items:center;gap:12px;">
-                                            <div style="width:34px;height:46px;border-radius:4px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">${m.poster_path ? `<img src="${TMDB_IMG+m.poster_path}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}</div>
-                                            <div>
-                                                <div class="m-title" style="font-size:14px;">${m.title}</div>
-                                                <div class="m-meta" style="font-size:11px;">${m.release_date ? getYear(m.release_date) : '—'}  ⭐ ${(m.vote_average||0).toFixed(1)}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            ${!movies.length ? '<div style="color:#5a6a7f;padding:20px;text-align:center;">No movies found.</div>' : ''}
+                <div class="director-page">
+                    <div class="dir-header">
+                        <div class="avatar">${profile ? `<img src="${profile}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />` : name.charAt(0).toUpperCase()}</div>
+                        <div class="info">
+                            <div class="name">${name}</div>
+                            <div class="avg">${known}  •  ⭐ <strong>${avgRating.toFixed(1)}</strong> avg rating  •  👁️ ${Math.round(popularity)}</div>
+                            <div style="color:#8a9aaf;font-size:14px;margin-top:2px;">${birthday}  •  ${place}</div>
                         </div>
                     </div>
-                `;
+                    <div style="background:rgba(255,255,255,0.02);border-radius:16px;padding:20px 24px;border:1px solid rgba(255,255,255,0.04);margin-bottom:28px;">
+                        <p style="color:#c8d0dc;line-height:1.7;font-size:15px;">${bio}</p>
+                    </div>
+                    <div class="perspective-block">
+                        <div class="p-title"><span class="emoji">🎬</span> Filmography (${movies.length} titles)</div>
+                        <div class="movie-list">
+                            ${movies.map(m => `
+                                <div class="movie-card" onclick="openMovie(${m.id})" style="padding:12px 16px;">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <div style="width:34px;height:46px;border-radius:4px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">${m.poster_path ? `<img src="${TMDB_IMG+m.poster_path}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}</div>
+                                        <div>
+                                            <div class="m-title" style="font-size:14px;">${m.title}</div>
+                                            <div class="m-meta" style="font-size:11px;">${m.release_date ? getYear(m.release_date) : '—'}  ⭐ ${(m.vote_average||0).toFixed(1)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${!movies.length ? '<div style="color:#5a6a7f;padding:20px;text-align:center;">No movies found.</div>' : ''}
+                    </div>
+                </div>
+            `;
             content.innerHTML = html;
         }
 
@@ -1651,7 +1634,7 @@
         window.openGenreRanking = openGenreRanking;
         window.performSearch = performSearch;
 
-        console.log('🚀 CineSphere – All subgenres now have a fallback to their parent genre.');
+        console.log('🚀 CineBASE – Final: search finds movies by title (contains), genres/subgenres mapped to official TMDB genres.');
     </script>
 </body>
 </html>
