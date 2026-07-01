@@ -129,6 +129,34 @@
             background: rgba(255, 255, 255, 0.06);
             flex-shrink: 0;
         }
+        .filter-group {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            flex-wrap: nowrap;
+        }
+        .filter-badge {
+            font-size: 11px;
+            color: #8a9aaf;
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            font-weight: 500;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+        }
+        .filter-badge:hover {
+            background: rgba(255, 255, 255, 0.07);
+            color: #d0d8e4;
+        }
+        .filter-badge.active {
+            background: rgba(99, 102, 241, 0.14);
+            border-color: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+        }
         .search-btn {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             border: none;
@@ -728,6 +756,8 @@
                 border-radius: 44px;
             }
             #search-overlay input { font-size: 13px; padding: 10px 0; }
+            .filter-group .filter-badge:not(.active) { display: none; }
+            .filter-group .filter-badge.active { font-size: 10px; padding: 3px 10px; }
             .search-btn { padding: 8px 16px; font-size: 12px; }
             .search-btn span { display: none; }
             #page-overlay { padding: 20px 16px 40px; }
@@ -752,6 +782,7 @@
                 border-radius: 34px;
             }
             #search-overlay input { font-size: 12px; padding: 8px 0; }
+            .filter-group .filter-badge.active { font-size: 9px; padding: 2px 8px; }
             .search-btn { padding: 6px 12px; font-size: 11px; }
             #page-overlay { padding: 14px 10px 30px; }
             .movie-page .poster-section .poster { width: 100px; height: 140px; font-size: 32px; }
@@ -790,8 +821,13 @@
 
         <!-- SEARCH BAR -->
         <div id="search-overlay">
-            <input type="text" id="search-input" placeholder="Search movies by title…" autocomplete="off" />
+            <input type="text" id="search-input" placeholder="Search movies or directors…" autocomplete="off" />
             <div class="divider"></div>
+            <div class="filter-group">
+                <span class="filter-badge active" data-filter="all">All</span>
+                <span class="filter-badge" data-filter="movie">Movies</span>
+                <span class="filter-badge" data-filter="director">Directors</span>
+            </div>
             <button class="search-btn" id="search-btn">⌘ <span>Search</span></button>
             <div id="search-results"></div>
         </div>
@@ -848,9 +884,7 @@
         let genresLoaded = false;
 
         // ── display name to actual TMDB genre name mapping ──
-        // This covers main genres and all subgenres, mapped to official TMDB genre names.
         const DISPLAY_TO_GENRE = {
-            // Main genres
             'Action': 'Action',
             'Drama': 'Drama',
             'Comedy': 'Comedy',
@@ -861,8 +895,6 @@
             'Animation': 'Animation',
             'Fantasy': 'Fantasy',
             'Crime': 'Crime',
-
-            // Subgenres (mapped to parent genres)
             'Adventure': 'Adventure',
             'Martial Arts': 'Action',
             'Superhero': 'Action',
@@ -870,14 +902,12 @@
             'War': 'War',
             'Disaster': 'Action',
             'Heist': 'Crime',
-
             'Historical': 'History',
             'Psychological': 'Thriller',
             'Family': 'Family',
             'Legal': 'Drama',
             'Political': 'Thriller',
             'Melodrama': 'Drama',
-
             'Romantic': 'Romance',
             'Black': 'Comedy',
             'Satire': 'Comedy',
@@ -885,31 +915,26 @@
             'Mockumentary': 'Comedy',
             'Screwball': 'Comedy',
             'Dark': 'Comedy',
-
             'Cyberpunk': 'Science Fiction',
             'Space Opera': 'Science Fiction',
             'Time Travel': 'Science Fiction',
             'Dystopian': 'Science Fiction',
             'Alien': 'Science Fiction',
             'Steampunk': 'Science Fiction',
-
             'Slasher': 'Horror',
             'Supernatural': 'Horror',
             'Body': 'Horror',
             'Found Footage': 'Horror',
             'Gothic': 'Horror',
-
             'Romantic Drama': 'Romance',
             'Romantic Comedy': 'Romance',
             'Period': 'Romance',
             'Musical': 'Music',
             'Teen': 'Romance',
             'Epic': 'Adventure',
-
             'Mystery': 'Mystery',
             'Neo-Noir': 'Crime',
             'Erotic': 'Romance',
-
             '2D': 'Animation',
             '3D': 'Animation',
             'Stop Motion': 'Animation',
@@ -917,14 +942,12 @@
             'CGI': 'Animation',
             'Claymation': 'Animation',
             'Traditional': 'Animation',
-
             'High': 'Fantasy',
             'Low': 'Fantasy',
             'Urban': 'Fantasy',
             'Sword & Sorcery': 'Fantasy',
             'Fairy Tale': 'Fantasy',
             'Mythological': 'Fantasy',
-
             'Mob': 'Crime',
             'Noir': 'Crime',
             'Detective': 'Crime',
@@ -954,7 +977,7 @@
             return ids.map(id => genreMap[id] || 'Unknown').filter(Boolean);
         }
 
-        // ── GENRE RANKING – always uses official TMDB genre ID ──
+        // ── GENRE RANKING ──
         async function openGenreRanking(name, fallbackName = null) {
             if (!genresLoaded) await genresPromise;
 
@@ -965,9 +988,7 @@
             document.body.style.overflow = 'hidden';
 
             try {
-                // Determine the official genre name
                 let officialGenre = DISPLAY_TO_GENRE[name] || name;
-                // If no direct mapping, try fallback
                 if (!genreNameToId[officialGenre] && fallbackName) {
                     officialGenre = DISPLAY_TO_GENRE[fallbackName] || fallbackName;
                 }
@@ -1266,11 +1287,22 @@
         });
 
         // ═══════════════════════════════════════════════════════════════════
-        //  SEARCH – MOVIES ONLY (title contains query, case-insensitive)
+        //  SEARCH – with filters: All / Movies / Directors
         // ═══════════════════════════════════════════════════════════════════
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
         const resultsContainer = document.getElementById('search-results');
+        let currentFilter = 'all';
+
+        document.querySelectorAll('.filter-badge').forEach(el => {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.filter-badge').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                const v = searchInput.value;
+                if (v.trim().length > 0) performSearch(v);
+            });
+        });
 
         async function performSearch(query) {
             if (!query || query.trim().length === 0) {
@@ -1280,83 +1312,114 @@
 
             const trimmed = query.trim();
 
-            // Ensure genres are loaded for genre detection (but we don't need it for movie search)
             if (!genresLoaded) await genresPromise;
 
-            // If the query matches a known genre or subgenre name, open the ranking overlay.
-            // This allows the user to type "Sci-Fi" and see the ranking.
+            // Check if the query is a genre name – if so, open the ranking overlay
             const lower = trimmed.toLowerCase();
-            // Check if we have a mapping for this term (including subgenres)
             const mappedGenre = DISPLAY_TO_GENRE[trimmed] || DISPLAY_TO_GENRE[lower] || null;
             if (mappedGenre && genreNameToId[mappedGenre]) {
                 openGenreRanking(trimmed);
                 resultsContainer.classList.remove('open');
                 return;
             }
-            // Also check main genre names directly
             if (genreNameToId[lower] || genreNameToId[trimmed]) {
                 openGenreRanking(trimmed);
                 resultsContainer.classList.remove('open');
                 return;
             }
 
-            // Movie search – find movies whose title contains the query (case-insensitive)
-            try {
-                const data = await tmdbFetch('/search/movie', `&query=${encodeURIComponent(trimmed)}`);
-                const results = data.results || [];
-                const lowerQuery = trimmed.toLowerCase();
-                // Filter to titles that contain the query (anywhere)
-                const matched = results.filter(m =>
-                    m.title && m.title.toLowerCase().includes(lowerQuery)
-                ).slice(0, 8);
+            let html = '';
+            let resultsFound = 0;
 
-                if (!matched.length) {
-                    resultsContainer.innerHTML =
-                        `<div class="result-empty">No movies found containing “${trimmed}”</div>`;
-                    resultsContainer.classList.add('open');
-                    return;
-                }
+            // ── MOVIE SEARCH ──
+            if (currentFilter === 'all' || currentFilter === 'movie') {
+                try {
+                    const movieData = await tmdbFetch('/search/movie', `&query=${encodeURIComponent(trimmed)}`);
+                    const movies = movieData.results || [];
+                    const lowerQuery = trimmed.toLowerCase();
+                    const matched = movies.filter(m =>
+                        m.title && m.title.toLowerCase().includes(lowerQuery)
+                    ).slice(0, 6);
 
-                let html = '';
-                for (const item of matched) {
-                    const title = item.title || 'Untitled';
-                    const year = item.release_date ? getYear(item.release_date) : null;
-                    const poster = item.poster_path ? TMDB_IMG + item.poster_path : null;
-                    const genreLabel = (item.genre_ids && item.genre_ids.length) ?
-                        genreNames(item.genre_ids.slice(0, 2)).join(', ') : 'Movie';
+                    for (const item of matched) {
+                        const title = item.title || 'Untitled';
+                        const year = item.release_date ? getYear(item.release_date) : null;
+                        const poster = item.poster_path ? TMDB_IMG + item.poster_path : null;
+                        const genreLabel = (item.genre_ids && item.genre_ids.length) ?
+                            genreNames(item.genre_ids.slice(0, 2)).join(', ') : 'Movie';
 
-                    html += `
-                        <div class="result-item" data-id="${item.id}" data-type="movie">
-                            <div class="poster-sm">${poster ? `<img src="${poster}" />` : '🎬'}</div>
-                            <div class="info">
-                                <div class="title">${title} ${year ? `<span style="color:#5a6a7f;font-weight:400;">(${year})</span>` : ''}</div>
-                                <div class="sub">${genreLabel}</div>
+                        html += `
+                            <div class="result-item" data-id="${item.id}" data-type="movie">
+                                <div class="poster-sm">${poster ? `<img src="${poster}" />` : '🎬'}</div>
+                                <div class="info">
+                                    <div class="title">${title} ${year ? `<span style="color:#5a6a7f;font-weight:400;">(${year})</span>` : ''}</div>
+                                    <div class="sub">${genreLabel}</div>
+                                </div>
+                                <span class="badge-genre">🎬 Movie</span>
                             </div>
-                            <span class="badge-genre">🎬 Movie</span>
-                        </div>
-                    `;
-                }
-
-                resultsContainer.innerHTML = html;
-                resultsContainer.classList.add('open');
-
-                resultsContainer.querySelectorAll('.result-item').forEach(el => {
-                    el.addEventListener('click', function() {
-                        const id = this.dataset.id;
-                        openMovie(id);
-                        resultsContainer.classList.remove('open');
-                        searchInput.value = '';
-                    });
-                });
-
-            } catch (err) {
-                resultsContainer.innerHTML =
-                    `<div class="result-empty" style="color:#f87171;">Error: ${err.message}</div>`;
-                resultsContainer.classList.add('open');
+                        `;
+                        resultsFound++;
+                    }
+                } catch (e) { console.warn('Movie search error', e); }
             }
+
+            // ── DIRECTOR SEARCH ──
+            if (currentFilter === 'all' || currentFilter === 'director') {
+                try {
+                    const personData = await tmdbFetch('/search/person', `&query=${encodeURIComponent(trimmed)}`);
+                    const persons = personData.results || [];
+                    // Only people whose known_for_department is "Directing"
+                    const directors = persons.filter(p =>
+                        p.known_for_department && p.known_for_department.toLowerCase() === 'directing'
+                    ).slice(0, 5);
+
+                    for (const person of directors) {
+                        const name = person.name || 'Unknown';
+                        const profile = person.profile_path ? TMDB_IMG + person.profile_path : null;
+                        const knownFor = person.known_for ? person.known_for.slice(0, 2).map(m => m.title || m.name).join(', ') : '';
+
+                        html += `
+                            <div class="result-item" data-id="${person.id}" data-type="person">
+                                <div class="poster-sm">${profile ? `<img src="${profile}" />` : '👤'}</div>
+                                <div class="info">
+                                    <div class="title">${name}</div>
+                                    <div class="sub">${knownFor ? 'Known for: ' + knownFor : 'Director'}</div>
+                                </div>
+                                <span class="badge-genre">👤 Director</span>
+                            </div>
+                        `;
+                        resultsFound++;
+                    }
+                } catch (e) { console.warn('Person search error', e); }
+            }
+
+            if (resultsFound === 0) {
+                resultsContainer.innerHTML =
+                    `<div class="result-empty">No ${currentFilter === 'all' ? 'movies or directors' : currentFilter === 'movie' ? 'movies' : 'directors'} found for “${trimmed}”</div>`;
+                resultsContainer.classList.add('open');
+                return;
+            }
+
+            resultsContainer.innerHTML = html;
+            resultsContainer.classList.add('open');
+
+            // Attach click events
+            resultsContainer.querySelectorAll('.result-item').forEach(el => {
+                el.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const type = this.dataset.type;
+                    if (type === 'person') {
+                        openPerson(id);
+                    } else {
+                        openMovie(id);
+                    }
+                    resultsContainer.classList.remove('open');
+                    searchInput.value = '';
+                });
+            });
         }
 
-        // ── Movie detail and person functions (unchanged) ──
+        // ── Movie detail ──
         async function openMovie(id) {
             const overlay = document.getElementById('page-overlay');
             const content = document.getElementById('page-content');
@@ -1517,10 +1580,11 @@
             content.innerHTML = html;
         }
 
+        // ── Person / Director detail – FIXED to show DIRECTED movies ──
         async function openPerson(id) {
             const overlay = document.getElementById('page-overlay');
             const content = document.getElementById('page-content');
-            content.innerHTML = `<div class="loading-spinner">Loading person…</div>`;
+            content.innerHTML = `<div class="loading-spinner">Loading director…</div>`;
             overlay.classList.add('open');
             document.body.style.overflow = 'hidden';
             try {
@@ -1536,24 +1600,39 @@
             const content = document.getElementById('page-content');
             const name = data.name || 'Unknown';
             const profile = data.profile_path ? TMDB_IMG + data.profile_path : null;
-            const known = data.known_for_department || 'Actor';
+            const known = data.known_for_department || 'Director';
             const birthday = data.birthday || 'N/A';
             const place = data.place_of_birth || 'N/A';
             const bio = data.biography || 'No biography available.';
-            const movies = data.movie_credits?.cast?.slice(0, 12) || [];
             const popularity = data.popularity || 0;
+
+            // ── FIX: Get movies they DIRECTED (crew, job === 'Director') ──
+            const crewCredits = data.movie_credits?.crew || [];
+            const directedMovies = crewCredits
+                .filter(c => c.job === 'Director')
+                .sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''))
+                .slice(0, 15);
+
+            // Also get some cast info for the "known for" section
+            const castCredits = data.movie_credits?.cast || [];
+            const popularCast = castCredits
+                .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+                .slice(0, 5);
+
+            // Average rating of their directed films
             let avgRating = 0;
-            const rated = movies.filter(m => m.vote_average > 0);
+            const rated = directedMovies.filter(m => m.vote_average > 0);
             if (rated.length) {
                 avgRating = rated.reduce((s, m) => s + m.vote_average, 0) / rated.length;
             }
+
             const html = `
                 <div class="director-page">
                     <div class="dir-header">
                         <div class="avatar">${profile ? `<img src="${profile}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />` : name.charAt(0).toUpperCase()}</div>
                         <div class="info">
                             <div class="name">${name}</div>
-                            <div class="avg">${known}  •  ⭐ <strong>${avgRating.toFixed(1)}</strong> avg rating  •  👁️ ${Math.round(popularity)}</div>
+                            <div class="avg">🎬 Director  •  ⭐ <strong>${avgRating.toFixed(1)}</strong> avg rating  •  👁️ ${Math.round(popularity)}</div>
                             <div style="color:#8a9aaf;font-size:14px;margin-top:2px;">${birthday}  •  ${place}</div>
                         </div>
                     </div>
@@ -1561,9 +1640,9 @@
                         <p style="color:#c8d0dc;line-height:1.7;font-size:15px;">${bio}</p>
                     </div>
                     <div class="perspective-block">
-                        <div class="p-title"><span class="emoji">🎬</span> Filmography (${movies.length} titles)</div>
+                        <div class="p-title"><span class="emoji">🎬</span> Directed Films (${directedMovies.length} titles)</div>
                         <div class="movie-list">
-                            ${movies.map(m => `
+                            ${directedMovies.map(m => `
                                 <div class="movie-card" onclick="openMovie(${m.id})" style="padding:12px 16px;">
                                     <div style="display:flex;align-items:center;gap:12px;">
                                         <div style="width:34px;height:46px;border-radius:4px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">${m.poster_path ? `<img src="${TMDB_IMG+m.poster_path}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}</div>
@@ -1575,8 +1654,26 @@
                                 </div>
                             `).join('')}
                         </div>
-                        ${!movies.length ? '<div style="color:#5a6a7f;padding:20px;text-align:center;">No movies found.</div>' : ''}
+                        ${!directedMovies.length ? '<div style="color:#5a6a7f;padding:20px;text-align:center;">No directed films found.</div>' : ''}
                     </div>
+                    ${popularCast.length ? `
+                    <div class="perspective-block" style="margin-top:16px;">
+                        <div class="p-title"><span class="emoji">🎭</span> Also Appeared In</div>
+                        <div class="movie-list">
+                            ${popularCast.map(m => `
+                                <div class="movie-card" onclick="openMovie(${m.id})" style="padding:12px 16px;">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <div style="width:34px;height:46px;border-radius:4px;background:#141820;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">${m.poster_path ? `<img src="${TMDB_IMG+m.poster_path}" style="width:100%;height:100%;object-fit:cover;" />` : '🎬'}</div>
+                                        <div>
+                                            <div class="m-title" style="font-size:14px;">${m.title}</div>
+                                            <div class="m-meta" style="font-size:11px;">${m.release_date ? getYear(m.release_date) : '—'}  ⭐ ${(m.vote_average||0).toFixed(1)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             `;
             content.innerHTML = html;
@@ -1634,7 +1731,7 @@
         window.openGenreRanking = openGenreRanking;
         window.performSearch = performSearch;
 
-        console.log('🚀 CineBASE – Final: search finds movies by title (contains), genres/subgenres mapped to official TMDB genres.');
+        console.log('🚀 CineBASE – Final: search with All/Movies/Directors filters, director filmography shows directed films.');
     </script>
 </body>
 </html>
